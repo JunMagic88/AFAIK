@@ -1,0 +1,8 @@
+beautifulsoup4==4.11.2
+EbookLib==0.17.1
+gpt_index==0.2.13
+langchain==0.0.84
+openai==0.26.4
+PyPDF2==3.0.1
+streamlit==1.17.0
+streamlit_option_menu==0.3.2
