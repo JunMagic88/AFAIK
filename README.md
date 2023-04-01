@@ -1,2 +1,2 @@
-# AFAIK
-Document Q&amp;A powered by GPT, gpt-index and langchain
+# AFAIK-2.0
+Improved AFAIK AI research assistant using langchain, llama index and GPT 3.5 to perform research

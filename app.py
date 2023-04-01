@@ -1,15 +1,14 @@
 from gpt_index import GPTSimpleVectorIndex, SimpleDirectoryReader, PromptHelper
-from langchain import OpenAI
 from gpt_index import  LLMPredictor
 import streamlit as st
-import os
+import os, ebooklib
 from streamlit_option_menu import option_menu
 from io import BytesIO
 from PyPDF2 import PdfReader
-import textwrap, ebooklib
 from ebooklib import epub
 from bs4 import BeautifulSoup
 from styling import local_css
+from langchain.chat_models import ChatOpenAI
 
 def doc_search (files,llm_predictor):
     documents = ()
@@ -50,15 +49,6 @@ def doc_search (files,llm_predictor):
         index = GPTSimpleVectorIndex.load_from_disk(f'index/index.json',llm_predictor=llm_predictor)
 
     return index
-    
-
-@st.experimental_memo()
-def chunk_text(text,char):
-    sentences = text.split(". ")
-    wrapped_sentences = []
-    for sentence in sentences:
-        wrapped_sentences.extend(textwrap.wrap(sentence, char))
-    return ". ".join(wrapped_sentences)
 
 @st.experimental_memo()
 def convert_to_txt (file,file_ext):
@@ -132,22 +122,27 @@ if __name__=="__main__":
                 os.remove(f'index/{file}')
             placeholder.empty()
     # ask a question
-    question = st.text_input("Now ask a good question:", key="1", placeholder="Type a question and press Ask")
+    input = st.text_area(label="Ask one or more questions, separated by new line:")
+    questions = list ()
+    questions = input.splitlines()
+
+    #question = st.text_input("Now ask a good question:", key="1", placeholder="Type a question and press Ask")
     st.write("")
     ask = st.button(label="Ask",type='primary')
-    
-    if question and ask:
-        if not st.session_state["OPENAI_API_KEY"]:
-            st.error("Please configure your OpenAI API key in the left sidebar")
-        else:
-            llm_predictor = LLMPredictor(llm=OpenAI(openai_api_key=st.session_state["OPENAI_API_KEY"], temperature=0,model_name="text-davinci-003"))
-            # prompt_helper = PromptHelper(max_input_size=4096, num_output=3000, max_chunk_overlap=0)
-            index = doc_search(files,llm_predictor)
-            try:
-                with st.spinner("Working hard to get you a good answer..."):
-                    st.markdown(index.query(question, llm_predictor=llm_predictor)) 
-            except Exception as oops:
-                st.error("GPT Server Error: " + str(oops)+" Please try again.")
-    
-    
-    
+    for question in questions:
+        if question and ask:
+            st.markdown(f'<span style="font-size:24px; color:grey;">{question}</span>\n\n', unsafe_allow_html=True)
+            if not st.session_state["OPENAI_API_KEY"]:
+                st.error("Please configure your OpenAI API key in the left sidebar")
+            else:
+                llm_predictor = LLMPredictor(llm=ChatOpenAI(openai_api_key=st.session_state["OPENAI_API_KEY"], temperature=0,model_name="gpt-3.5-turbo"))
+                # prompt_helper = PromptHelper(max_input_size=4096, num_output=3000, max_chunk_overlap=0)
+                index = doc_search(files,llm_predictor)
+                try:
+                    with st.spinner("Working hard to get you a good answer..."):
+                        st.markdown(index.query(question, llm_predictor=llm_predictor)) 
+                except Exception as oops:
+                    st.error("GPT Server Error: " + str(oops)+" Please try again.")
+        
+        
+        
